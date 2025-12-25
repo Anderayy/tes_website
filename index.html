@@ -1,0 +1,763 @@
+﻿<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SnapSafari Photobooth</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600&display=swap");
+
+    :root {
+      --ink: #1c1b1f;
+      --sand: #f4efe6;
+      --coral: #ff7a6b;
+      --teal: #1f8a8a;
+      --olive: #8a8f63;
+      --sun: #ffd06b;
+      --glass: rgba(255, 255, 255, 0.7);
+      --border: rgba(0, 0, 0, 0.12);
+      --shadow: 0 30px 60px rgba(12, 21, 21, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Plus Jakarta Sans", "Trebuchet MS", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 700px at 10% 5%, rgba(255, 208, 107, 0.35), transparent 60%),
+        radial-gradient(900px 600px at 90% 20%, rgba(31, 138, 138, 0.35), transparent 55%),
+        linear-gradient(140deg, #f7f2ea 0%, #f0e7da 50%, #efe1d1 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .pattern {
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle at 12px 12px, rgba(0, 0, 0, 0.04) 2px, transparent 2px);
+      background-size: 42px 42px;
+      opacity: 0.5;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(16px);
+      background: rgba(244, 239, 230, 0.85);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      font-family: "Unbounded", sans-serif;
+      font-size: 1.2rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 18px;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .nav-links a {
+      color: inherit;
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      opacity: 1;
+    }
+
+    .cta {
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(120deg, var(--coral), var(--sun));
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 12px 22px rgba(255, 122, 107, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 30px rgba(255, 122, 107, 0.35);
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 70px 28px 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 36px;
+      align-items: center;
+    }
+
+    .hero h1 {
+      font-family: "Unbounded", sans-serif;
+      font-size: clamp(2.2rem, 3.6vw, 3.4rem);
+      line-height: 1.1;
+    }
+
+    .hero h1 span {
+      color: var(--teal);
+    }
+
+    .hero p {
+      margin-top: 16px;
+      font-size: 1.05rem;
+      max-width: 460px;
+      color: rgba(28, 27, 31, 0.75);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(31, 138, 138, 0.12);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .booth {
+      background: var(--glass);
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 16px;
+    }
+
+    .booth-screen {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #111;
+      aspect-ratio: 4 / 3;
+    }
+
+    .booth-screen video,
+    .booth-screen canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .status-pill {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      z-index: 2;
+    }
+
+    .booth-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn.primary {
+      background: var(--teal);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .btn.accent {
+      background: var(--coral);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .frame-section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 28px 60px;
+      display: grid;
+      grid-template-columns: minmax(250px, 360px) minmax(280px, 1fr);
+      gap: 26px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 20px;
+      box-shadow: 0 16px 30px rgba(12, 21, 21, 0.15);
+    }
+
+    .panel h2 {
+      font-family: "Unbounded", sans-serif;
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+    }
+
+    .frame-list {
+      display: grid;
+      gap: 12px;
+      max-height: 420px;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .frame-btn {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 12px;
+      align-items: center;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 10px;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .frame-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0, 0, 0, 0.2);
+    }
+
+    .frame-btn.active {
+      border-color: var(--teal);
+      box-shadow: 0 10px 18px rgba(31, 138, 138, 0.25);
+    }
+
+    .frame-thumb {
+      width: 90px;
+      height: 70px;
+      border-radius: 12px;
+      background: #111;
+      overflow: hidden;
+    }
+
+    .frame-info h4 {
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .frame-info p {
+      font-size: 0.85rem;
+      color: rgba(28, 27, 31, 0.7);
+    }
+
+    .strip {
+      display: grid;
+      gap: 12px;
+    }
+
+    .strip img {
+      width: 100%;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: #fff;
+      box-shadow: 0 14px 26px rgba(12, 21, 21, 0.15);
+    }
+
+    #result {
+      display: none;
+    }
+
+    #result.is-ready {
+      display: block;
+    }
+
+    .steps {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+      font-size: 0.95rem;
+      color: rgba(28, 27, 31, 0.75);
+    }
+
+    .steps strong {
+      color: var(--ink);
+    }
+
+    footer {
+      padding: 30px 28px 60px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: rgba(28, 27, 31, 0.6);
+    }
+
+    @media (max-width: 900px) {
+      .frame-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .nav {
+        flex-direction: column;
+      }
+
+      .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="pattern" aria-hidden="true"></div>
+  <header>
+    <nav class="nav">
+      <div class="brand">SnapSafari</div>
+      <div class="nav-links">
+        <a href="#booth">Photobooth</a>
+        <a href="#frames">Frame Hewan</a>
+        <a href="#hasil">Hasil</a>
+      </div>
+      <button class="cta" id="cta-start">Mulai Foto</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="booth">
+      <div>
+        <div class="chip-row">
+          <div class="chip">Filter Hewan</div>
+          <div class="chip">Instant Download</div>
+          <div class="chip">Tanpa Login</div>
+        </div>
+        <h1>Ubah layar jadi <span>photobooth</span> dengan frame hewan yang gemas.</h1>
+        <p>
+          Pilih tema hewan favorit kamu, nyalakan kamera, lalu ambil foto. Frame otomatis masuk ke foto
+          biar hasilnya siap buat dibagikan.
+        </p>
+      </div>
+      <div class="booth">
+        <div class="booth-screen">
+          <div class="status-pill" id="status">Kamera belum aktif</div>
+          <video id="video" playsinline></video>
+          <canvas id="overlay"></canvas>
+        </div>
+        <div class="booth-controls">
+          <button class="btn primary" id="start">Aktifkan Kamera</button>
+          <button class="btn accent" id="shot" disabled>Ambil Foto</button>
+          <button class="btn" id="download" disabled>Unduh Foto</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="frame-section" id="frames">
+      <div class="panel">
+        <h2>Pilih Frame Hewan</h2>
+        <div class="frame-list" id="frame-list"></div>
+        <div class="steps">
+          <div><strong>Tips:</strong> pakai cahaya depan biar wajah lebih terang.</div>
+          <div><strong>Zoom:</strong> atur jarak biar frame tidak kepotong.</div>
+          <div><strong>Ekspor:</strong> klik Unduh Foto untuk simpan.</div>
+        </div>
+      </div>
+      <div class="strip" id="hasil">
+        <div class="panel">
+          <h2>Hasil Terakhir</h2>
+          <p class="steps">Belum ada foto. Ambil foto pertama kamu di booth.</p>
+        </div>
+        <img id="result" alt="Hasil foto dengan frame" />
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    SnapSafari Photobooth. Gunakan di perangkat yang punya kamera.
+  </footer>
+
+  <script>
+    const video = document.getElementById("video");
+    const overlay = document.getElementById("overlay");
+    const statusText = document.getElementById("status");
+    const startBtn = document.getElementById("start");
+    const ctaStart = document.getElementById("cta-start");
+    const shotBtn = document.getElementById("shot");
+    const downloadBtn = document.getElementById("download");
+    const frameList = document.getElementById("frame-list");
+    const resultImg = document.getElementById("result");
+
+    const frames = [
+      {
+        id: "singa",
+        name: "Singa Sunshine",
+        desc: "Surai hangat, mood cerah.",
+        label: "SUN KING",
+        colors: { border: "#ffb347", ribbon: "#ff7a6b", text: "#3c2414", accent: "#ffb347" },
+        stickers: [
+          { type: "lion", x: 0.12, y: 0.18, size: 0.09 },
+          { type: "paw", x: 0.86, y: 0.78, size: 0.08 }
+        ]
+      },
+      {
+        id: "panda",
+        name: "Panda Cozy",
+        desc: "Hitam putih, tenang.",
+        label: "COZY PAWS",
+        colors: { border: "#222222", ribbon: "#1f8a8a", text: "#f4efe6", accent: "#222222" },
+        stickers: [
+          { type: "panda", x: 0.15, y: 0.8, size: 0.1 },
+          { type: "leaf", x: 0.82, y: 0.2, size: 0.08 }
+        ]
+      },
+      {
+        id: "rusa",
+        name: "Rusa Forest",
+        desc: "Nuansa hutan, adem.",
+        label: "FOREST FRIEND",
+        colors: { border: "#6b7b4c", ribbon: "#ffd06b", text: "#2a2d1f", accent: "#6b7b4c" },
+        stickers: [
+          { type: "deer", x: 0.12, y: 0.75, size: 0.1 },
+          { type: "leaf", x: 0.88, y: 0.25, size: 0.08 }
+        ]
+      },
+      {
+        id: "rubah",
+        name: "Rubah Sunset",
+        desc: "Energi oranye, playful.",
+        label: "SUNSET FOX",
+        colors: { border: "#ff7a6b", ribbon: "#1f8a8a", text: "#f4efe6", accent: "#ff7a6b" },
+        stickers: [
+          { type: "fox", x: 0.15, y: 0.2, size: 0.09 },
+          { type: "paw", x: 0.85, y: 0.75, size: 0.08 }
+        ]
+      }
+    ];
+
+    let activeFrame = frames[0];
+    let stream = null;
+    let imageCapture = null;
+    let cameraReady = false;
+    let pendingShot = false;
+
+    function drawAnimal(ctx, type, x, y, size, color) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = color;
+      ctx.strokeStyle = color;
+
+      if (type === "paw") {
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        for (let i = -1; i <= 1; i++) {
+          ctx.beginPath();
+          ctx.arc(i * size * 0.25, -size * 0.4, size * 0.15, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (type === "leaf") {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size * 0.35, size * 0.2, Math.PI / 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.3, 0);
+        ctx.lineTo(size * 0.3, 0);
+        ctx.lineWidth = Math.max(1, size * 0.05);
+        ctx.stroke();
+      } else if (type === "lion") {
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = "#f4efe6";
+        ctx.fill();
+      } else if (type === "panda") {
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(-size * 0.18, -size * 0.18, size * 0.12, 0, Math.PI * 2);
+        ctx.arc(size * 0.18, -size * 0.18, size * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (type === "deer") {
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.18, -size * 0.35);
+        ctx.lineTo(-size * 0.35, -size * 0.55);
+        ctx.moveTo(size * 0.18, -size * 0.35);
+        ctx.lineTo(size * 0.35, -size * 0.55);
+        ctx.lineWidth = Math.max(1, size * 0.05);
+        ctx.stroke();
+      } else if (type === "fox") {
+        ctx.beginPath();
+        ctx.moveTo(0, -size * 0.3);
+        ctx.lineTo(-size * 0.35, size * 0.3);
+        ctx.lineTo(size * 0.35, size * 0.3);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawFrame(ctx, width, height, frame, clearFirst = true) {
+      if (clearFirst) {
+        ctx.clearRect(0, 0, width, height);
+      }
+      const border = Math.max(14, width * 0.045);
+
+      ctx.lineWidth = border;
+      ctx.strokeStyle = frame.colors.border;
+      ctx.strokeRect(border / 2, border / 2, width - border, height - border);
+
+      ctx.fillStyle = frame.colors.ribbon;
+      ctx.fillRect(0, 0, width, border * 1.2);
+
+      ctx.fillStyle = frame.colors.text;
+      ctx.font = `700 ${Math.max(14, width * 0.05)}px Unbounded, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(frame.label, width / 2, border * 0.6);
+
+      frame.stickers.forEach((sticker) => {
+        drawAnimal(
+          ctx,
+          sticker.type,
+          sticker.x * width,
+          sticker.y * height,
+          sticker.size * width,
+          frame.colors.accent
+        );
+      });
+    }
+
+    function updateOverlay() {
+      if (!video.videoWidth) return;
+      overlay.width = video.videoWidth;
+      overlay.height = video.videoHeight;
+      drawFrame(overlay.getContext("2d"), overlay.width, overlay.height, activeFrame, true);
+    }
+
+    function renderThumbs() {
+      frames.forEach((frame) => {
+        const btn = document.createElement("button");
+        btn.className = "frame-btn";
+        btn.dataset.id = frame.id;
+
+        const thumb = document.createElement("canvas");
+        thumb.className = "frame-thumb";
+        thumb.width = 180;
+        thumb.height = 140;
+      drawFrame(thumb.getContext("2d"), thumb.width, thumb.height, frame, true);
+
+        const info = document.createElement("div");
+        info.className = "frame-info";
+        info.innerHTML = `<h4>${frame.name}</h4><p>${frame.desc}</p>`;
+
+        btn.appendChild(thumb);
+        btn.appendChild(info);
+        frameList.appendChild(btn);
+      });
+    }
+
+    function setActiveFrame(id) {
+      activeFrame = frames.find((frame) => frame.id === id) || frames[0];
+      document.querySelectorAll(".frame-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.id === activeFrame.id);
+      });
+      updateOverlay();
+    }
+
+    function waitForVideoReady() {
+      if (video.readyState >= 2 && video.videoWidth) {
+        return Promise.resolve();
+      }
+      return new Promise((resolve) => {
+        const onReady = () => {
+          video.removeEventListener("loadeddata", onReady);
+          video.removeEventListener("playing", onReady);
+          resolve();
+        };
+        video.addEventListener("loadeddata", onReady, { once: true });
+        video.addEventListener("playing", onReady, { once: true });
+      });
+    }
+
+    function waitForVideoFrame() {
+      if (video.readyState >= 2 && video.videoWidth) {
+        return new Promise((resolve) => {
+          if ("requestVideoFrameCallback" in video) {
+            video.requestVideoFrameCallback(() => resolve());
+          } else {
+            requestAnimationFrame(() => resolve());
+          }
+        });
+      }
+      return waitForVideoReady();
+    }
+
+    async function startCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        statusText.textContent = "Browser tidak mendukung kamera";
+        return;
+      }
+
+      if (stream) return;
+
+      statusText.textContent = "Meminta akses kamera...";
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        const track = stream.getVideoTracks()[0];
+        imageCapture = "ImageCapture" in window ? new ImageCapture(track) : null;
+        video.srcObject = stream;
+        video.muted = true;
+        video.autoplay = true;
+        await video.play();
+        await waitForVideoReady();
+        cameraReady = true;
+        statusText.textContent = "Live";
+        shotBtn.disabled = false;
+        updateOverlay();
+        if (pendingShot) {
+          pendingShot = false;
+          takeShot();
+        }
+      } catch (err) {
+        statusText.textContent = "Akses kamera ditolak atau tidak tersedia";
+        shotBtn.disabled = true;
+      }
+    }
+
+    async function takeShot() {
+      await waitForVideoFrame();
+      if (video.readyState < 2 || !video.videoWidth) {
+        statusText.textContent = "Tunggu kamera siap";
+        return;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      let drewVideo = false;
+      if (imageCapture && "takePhoto" in imageCapture) {
+        try {
+          const blob = await imageCapture.takePhoto();
+          const bitmap = await createImageBitmap(blob);
+          ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          drewVideo = true;
+        } catch (err) {
+          drewVideo = false;
+        }
+      }
+
+      if (!drewVideo && imageCapture) {
+        try {
+          const bitmap = await imageCapture.grabFrame();
+          ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          drewVideo = true;
+        } catch (err) {
+          drewVideo = false;
+        }
+      }
+
+      if (!drewVideo) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      }
+      drawFrame(ctx, canvas.width, canvas.height, activeFrame, false);
+      const data = canvas.toDataURL("image/png");
+      resultImg.src = data;
+      resultImg.classList.add("is-ready");
+      downloadBtn.disabled = false;
+    }
+
+    async function capturePhoto() {
+      if (!cameraReady) {
+        pendingShot = true;
+        startCamera();
+        return;
+      }
+      await takeShot();
+    }
+
+    function downloadPhoto() {
+      if (!resultImg.src) return;
+      const link = document.createElement("a");
+      link.href = resultImg.src;
+      link.download = `snapsafari-${activeFrame.id}.png`;
+      link.click();
+    }
+
+    renderThumbs();
+    setActiveFrame(activeFrame.id);
+
+    frameList.addEventListener("click", (event) => {
+      const btn = event.target.closest(".frame-btn");
+      if (!btn) return;
+      setActiveFrame(btn.dataset.id);
+    });
+
+    startBtn.addEventListener("click", startCamera);
+    ctaStart.addEventListener("click", () => {
+      document.getElementById("booth").scrollIntoView({ behavior: "smooth", block: "start" });
+      startCamera();
+    });
+    shotBtn.addEventListener("click", capturePhoto);
+    downloadBtn.addEventListener("click", downloadPhoto);
+    video.addEventListener("loadedmetadata", updateOverlay);
+    window.addEventListener("resize", updateOverlay);
+  </script>
+</body>
+</html>
